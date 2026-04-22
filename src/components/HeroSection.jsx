@@ -22,11 +22,13 @@ const COUNT_LABELS = [
   ["minutes", "MINUTOS"],
   ["seconds", "SEGUNDOS"],
 ];
-const FRAME_COUNT = 360;
+const FRAME_COUNT = 288;
 
 function HeroSection() {
   const [time, setTime] = useState(getTimeLeft());
   const [activeFrame, setActiveFrame] = useState(1);
+  const [introVideoSrc, setIntroVideoSrc] = useState("");
+  const [loopVideoSrc, setLoopVideoSrc] = useState("");
   const headerMediaRef = useRef(null);
   const frameSequenceRef = useRef(null);
   const introVideoRef = useRef(null);
@@ -58,6 +60,47 @@ function HeroSection() {
   }, []);
 
   useEffect(() => {
+    let disposed = false;
+    let introUrl = "";
+    let loopUrl = "";
+
+    const loadSecureVideos = async () => {
+      try {
+        const [introRes, loopRes] = await Promise.all([
+          fetch("/secure/video/intro.dat"),
+          fetch("/secure/video/loop.dat"),
+        ]);
+        if (!introRes.ok || !loopRes.ok) return;
+
+        const [introBlob, loopBlob] = await Promise.all([
+          introRes.blob(),
+          loopRes.blob(),
+        ]);
+        if (disposed) return;
+
+        introUrl = URL.createObjectURL(
+          new Blob([introBlob], { type: "video/webm" })
+        );
+        loopUrl = URL.createObjectURL(
+          new Blob([loopBlob], { type: "video/webm" })
+        );
+        setIntroVideoSrc(introUrl);
+        setLoopVideoSrc(loopUrl);
+      } catch {
+        // Keep hero poster fallback if secure media fails to load.
+      }
+    };
+
+    loadSecureVideos();
+
+    return () => {
+      disposed = true;
+      if (introUrl) URL.revokeObjectURL(introUrl);
+      if (loopUrl) URL.revokeObjectURL(loopUrl);
+    };
+  }, []);
+
+  useEffect(() => {
     currentFrameRef.current = activeFrame;
   }, [activeFrame]);
 
@@ -72,7 +115,7 @@ function HeroSection() {
       preloadedFramesRef.current.add(index);
       const img = new Image();
       img.decoding = "async";
-      img.src = `/111/${String(index).padStart(3, "0")}.jpg`;
+        img.src = `/secure/frames/${String(index).padStart(3, "0")}.dat`;
     };
 
     const schedule = () => {
@@ -331,7 +374,7 @@ function HeroSection() {
               <video
                 ref={introVideoRef}
                 className="pointer-events-none absolute inset-0 z-0 block h-full w-full object-cover bg-[#E3DDD5]/20"
-                src="/1.webm"
+                src={introVideoSrc}
                 poster={heroBanner}
                 muted
                 onEnded={handleIntroEnded}
@@ -344,7 +387,7 @@ function HeroSection() {
                 <video
                   ref={loopVideoRef}
                   className="pointer-events-none relative z-10 block h-full w-full object-cover"
-                  src="/2.webm"
+                  src={loopVideoSrc}
                   muted
                   loop
                   playsInline
@@ -365,7 +408,7 @@ function HeroSection() {
         <div ref={frameSequenceRef} className="relative w-full h-[100svh]">
           <div className="absolute inset-0 flex justify-center">
             <img
-              src={`/111/${String(activeFrame).padStart(3, "0")}.jpg`}
+              src={`/secure/frames/${String(activeFrame).padStart(3, "0")}.dat`}
               alt="Frame sequence"
               className="h-full w-full object-cover"
               loading="eager"
