@@ -32,6 +32,10 @@ function HeroSection() {
   const introVideoRef = useRef(null);
   const loopVideoRef = useRef(null);
   const touchStartYRef = useRef(null);
+  const currentFrameRef = useRef(1);
+  const queuedDeltaRef = useRef(0);
+  const queuedRafRef = useRef(null);
+  const preloadedFramesRef = useRef(new Set());
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [hasSwitchedToLoop, setHasSwitchedToLoop] = useState(false);
   const [isSequenceActive, setIsSequenceActive] = useState(false);
@@ -48,8 +52,70 @@ function HeroSection() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
     setActiveFrame(1);
+    currentFrameRef.current = 1;
     setIsSequenceDone(false);
     setIsSequenceActive(false);
+  }, []);
+
+  useEffect(() => {
+    currentFrameRef.current = activeFrame;
+  }, [activeFrame]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let idleId = null;
+    let timeoutId = null;
+    let frame = 1;
+
+    const preloadFrame = (index) => {
+      if (preloadedFramesRef.current.has(index)) return;
+      preloadedFramesRef.current.add(index);
+      const img = new Image();
+      img.decoding = "async";
+      img.src = `/111/${String(index).padStart(3, "0")}.jpg`;
+    };
+
+    const schedule = () => {
+      if (cancelled) return;
+
+      if (typeof window.requestIdleCallback === "function") {
+        idleId = window.requestIdleCallback(
+          (deadline) => {
+            while (
+              frame <= FRAME_COUNT &&
+              (deadline.timeRemaining() > 4 || deadline.didTimeout)
+            ) {
+              preloadFrame(frame);
+              frame += 1;
+            }
+            if (frame <= FRAME_COUNT) schedule();
+          },
+          { timeout: 250 }
+        );
+      } else {
+        timeoutId = window.setTimeout(() => {
+          let batch = 0;
+          while (frame <= FRAME_COUNT && batch < 10) {
+            preloadFrame(frame);
+            frame += 1;
+            batch += 1;
+          }
+          if (frame <= FRAME_COUNT) schedule();
+        }, 16);
+      }
+    };
+
+    schedule();
+
+    return () => {
+      cancelled = true;
+      if (idleId !== null && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -156,19 +222,26 @@ function HeroSection() {
       setIsSequenceActive(false);
     };
 
-    const updateByDelta = (deltaY) => {
+    const applyQueuedDelta = () => {
+      const deltaY = queuedDeltaRef.current;
+      queuedDeltaRef.current = 0;
+      queuedRafRef.current = null;
       if (!deltaY) return;
       const direction = deltaY > 0 ? 1 : -1;
       const step = Math.max(1, Math.round(Math.abs(deltaY) / 30));
       let didHitStart = false;
       let didHitEnd = false;
 
-      setActiveFrame((prev) => {
-        const next = Math.min(FRAME_COUNT, Math.max(1, prev + direction * step));
-        didHitStart = next <= 1 && direction < 0;
-        didHitEnd = next >= FRAME_COUNT && direction > 0;
-        return next;
-      });
+      const next = Math.min(
+        FRAME_COUNT,
+        Math.max(1, currentFrameRef.current + direction * step)
+      );
+      didHitStart = next <= 1 && direction < 0;
+      didHitEnd = next >= FRAME_COUNT && direction > 0;
+      if (next !== currentFrameRef.current) {
+        currentFrameRef.current = next;
+        setActiveFrame(next);
+      }
 
       if (didHitStart) {
         releaseLock();
@@ -183,9 +256,15 @@ function HeroSection() {
       }
     };
 
+    const queueDelta = (deltaY) => {
+      queuedDeltaRef.current += deltaY;
+      if (queuedRafRef.current !== null) return;
+      queuedRafRef.current = window.requestAnimationFrame(applyQueuedDelta);
+    };
+
     const onWheel = (event) => {
       if (!released) event.preventDefault();
-      updateByDelta(event.deltaY);
+      queueDelta(event.deltaY);
     };
 
     const onTouchStart = (event) => {
@@ -198,7 +277,7 @@ function HeroSection() {
       if (!released) event.preventDefault();
       const deltaY = touchStartYRef.current - currentY;
       touchStartYRef.current = currentY;
-      updateByDelta(deltaY * 1.4);
+      queueDelta(deltaY * 1.4);
     };
 
     window.addEventListener("wheel", onWheel, { passive: false });
@@ -210,6 +289,11 @@ function HeroSection() {
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
+      if (queuedRafRef.current !== null) {
+        window.cancelAnimationFrame(queuedRafRef.current);
+        queuedRafRef.current = null;
+      }
+      queuedDeltaRef.current = 0;
       touchStartYRef.current = null;
     };
   }, [isSequenceActive, isSequenceDone]);
