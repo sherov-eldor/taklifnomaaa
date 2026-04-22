@@ -22,7 +22,7 @@ const COUNT_LABELS = [
   ["minutes", "MINUTOS"],
   ["seconds", "SEGUNDOS"],
 ];
-const FRAME_COUNT = 450;
+const FRAME_COUNT = 360;
 
 function HeroSection() {
   const [time, setTime] = useState(getTimeLeft());
