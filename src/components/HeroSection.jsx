@@ -27,8 +27,6 @@ const FRAME_COUNT = 288;
 function HeroSection() {
   const [time, setTime] = useState(getTimeLeft());
   const [activeFrame, setActiveFrame] = useState(1);
-  const [introVideoSrc, setIntroVideoSrc] = useState("");
-  const [loopVideoSrc, setLoopVideoSrc] = useState("");
   const headerMediaRef = useRef(null);
   const frameSequenceRef = useRef(null);
   const introVideoRef = useRef(null);
@@ -37,6 +35,7 @@ function HeroSection() {
   const currentFrameRef = useRef(1);
   const queuedDeltaRef = useRef(0);
   const queuedRafRef = useRef(null);
+  const lastFrameUpdateAtRef = useRef(0);
   const preloadedFramesRef = useRef(new Set());
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [hasSwitchedToLoop, setHasSwitchedToLoop] = useState(false);
@@ -60,47 +59,6 @@ function HeroSection() {
   }, []);
 
   useEffect(() => {
-    let disposed = false;
-    let introUrl = "";
-    let loopUrl = "";
-
-    const loadSecureVideos = async () => {
-      try {
-        const [introRes, loopRes] = await Promise.all([
-          fetch("/secure/video/intro.dat"),
-          fetch("/secure/video/loop.dat"),
-        ]);
-        if (!introRes.ok || !loopRes.ok) return;
-
-        const [introBlob, loopBlob] = await Promise.all([
-          introRes.blob(),
-          loopRes.blob(),
-        ]);
-        if (disposed) return;
-
-        introUrl = URL.createObjectURL(
-          new Blob([introBlob], { type: "video/webm" })
-        );
-        loopUrl = URL.createObjectURL(
-          new Blob([loopBlob], { type: "video/webm" })
-        );
-        setIntroVideoSrc(introUrl);
-        setLoopVideoSrc(loopUrl);
-      } catch {
-        // Keep hero poster fallback if secure media fails to load.
-      }
-    };
-
-    loadSecureVideos();
-
-    return () => {
-      disposed = true;
-      if (introUrl) URL.revokeObjectURL(introUrl);
-      if (loopUrl) URL.revokeObjectURL(loopUrl);
-    };
-  }, []);
-
-  useEffect(() => {
     currentFrameRef.current = activeFrame;
   }, [activeFrame]);
 
@@ -115,7 +73,7 @@ function HeroSection() {
       preloadedFramesRef.current.add(index);
       const img = new Image();
       img.decoding = "async";
-        img.src = `/secure/frames/${String(index).padStart(3, "0")}.dat`;
+      img.src = `/secure/frames/${String(index).padStart(3, "0")}.jpg`;
     };
 
     const schedule = () => {
@@ -265,7 +223,13 @@ function HeroSection() {
       setIsSequenceActive(false);
     };
 
-    const applyQueuedDelta = () => {
+    const applyQueuedDelta = (timestamp) => {
+      if (timestamp - lastFrameUpdateAtRef.current < 33) {
+        queuedRafRef.current = window.requestAnimationFrame(applyQueuedDelta);
+        return;
+      }
+      lastFrameUpdateAtRef.current = timestamp;
+
       const deltaY = queuedDeltaRef.current;
       queuedDeltaRef.current = 0;
       queuedRafRef.current = null;
@@ -374,7 +338,7 @@ function HeroSection() {
               <video
                 ref={introVideoRef}
                 className="pointer-events-none absolute inset-0 z-0 block h-full w-full object-cover bg-[#E3DDD5]/20"
-                src={introVideoSrc}
+                src="/1.webm"
                 poster={heroBanner}
                 muted
                 onEnded={handleIntroEnded}
@@ -387,7 +351,7 @@ function HeroSection() {
                 <video
                   ref={loopVideoRef}
                   className="pointer-events-none relative z-10 block h-full w-full object-cover"
-                  src={loopVideoSrc}
+                  src="/2.webm"
                   muted
                   loop
                   playsInline
@@ -408,7 +372,7 @@ function HeroSection() {
         <div ref={frameSequenceRef} className="relative w-full h-[100svh]">
           <div className="absolute inset-0 flex justify-center">
             <img
-              src={`/secure/frames/${String(activeFrame).padStart(3, "0")}.dat`}
+              src={`/secure/frames/${String(activeFrame).padStart(3, "0")}.jpg`}
               alt="Frame sequence"
               className="h-full w-full object-cover"
               loading="eager"
