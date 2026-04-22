@@ -1,0 +1,131 @@
+@import url("https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Cinzel:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap");
+@import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Cormorant Garamond", serif;
+  color: #2d4034;
+}
+
+.font-script {
+  font-family: "Great Vibes", cursive;
+}
+
+.font-playfair {
+  font-family: "Playfair Display", serif;
+}
+
+.font-cinzel {
+  font-family: "Cinzel", serif;
+}
+
+.font-montserrat {
+  font-family: "Montserrat", sans-serif;
+}
+
+.font-mis15 {
+  font-family: "Alex Brush", cursive;
+}
+
+/* Paper texture (invitation card) */
+.paper-texture {
+  background-color: transparent;
+  background-image: none;
+}
+
+/* Classical pillars — mist / sketch look */
+.hero-pillar {
+  position: absolute;
+  top: 5rem;
+  width: 2.5rem;
+  height: 15rem;
+  background: linear-gradient(
+    90deg,
+    rgba(180, 188, 196, 0.1) 0%,
+    rgba(220, 226, 232, 0.3) 45%,
+    rgba(160, 170, 182, 0.15) 100%
+  );
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.4);
+  filter: blur(0.5px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.hero-pillar-left {
+  left: 0.5rem;
+  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+}
+
+.hero-pillar-right {
+  right: 0.5rem;
+  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+}
+
+.text-gold {
+  color: #b5935b;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.text-premium-green {
+  color: #2d4034;
+}
+
+/* Music Player Progress */
+.music-progress {
+  height: 2px;
+  background: #E3DDD5;
+  border-radius: 10px;
+  position: relative;
+}
+
+.music-progress-inner {
+  height: 100%;
+  background: #E3DDD5;
+  border-radius: 10px;
+  width: 35%;
+}
+
+.music-handle {
+  position: absolute;
+  top: 50%;
+  left: 35%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  background: #E3DDD5;
+  border: 2px solid #E3DDD5;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Calendar heart */
+.calendar-heart {
+  position: relative;
+}
+
+.calendar-heart::after {
+  content: "❤";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -45%);
+  font-size: 1.8rem;
+  color: #c9a66b;
+  opacity: 0.3;
+  pointer-events: none;
+  font-family: serif;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
