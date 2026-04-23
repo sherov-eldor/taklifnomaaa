@@ -1,10 +1,11 @@
 import { useMemo, useState, useEffect, useLayoutEffect, useRef } from "react";
-import { motion, useScroll, useTransform, useVelocity, useMotionValue, useMotionValueEvent } from "framer-motion";
+import { motion, useScroll, useTransform, useVelocity, useMotionValue, useMotionValueEvent, useInView } from "framer-motion";
 
 import IsmlarOverlay from "./IsmlarOverlay";
 import carImage from "../assets/car.png";
+import weddingBuilding from "../assets/wedding_building.png";
 
-const targetDate = new Date("2026-03-14T18:00:00");
+const targetDate = new Date("2026-04-05T18:00:00");
 
 const getTimeLeft = () => {
   const diff = targetDate.getTime() - Date.now();
@@ -476,16 +477,12 @@ function HeroSection() {
     };
   }, [isSequenceDone]);
 
-  const monthGrid = useMemo(
-    () => ["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"],
-    []
-  );
+  const weekDays = ["DU", "SE", "CHOR", "PAY", "JU", "SHA", "YA"];
+  // April 5, 2026 is Sunday (YA = Yakshanba), week: March 30 – April 5
+  const weekDates = [30, 31, 1, 2, 3, 4, 5];
 
-  const marchLeadingBlanks = useMemo(() => {
-    const dow = new Date(2026, 2, 1).getDay(); 
-    const mondayFirstIndex = dow === 0 ? 6 : dow - 1;
-    return mondayFirstIndex;
-  }, []);
+  const buildingRef = useRef(null);
+  const isBuildingInView = useInView(buildingRef, { once: true, amount: 0.3 });
 
   return (
     <div className="relative z-10 flex min-h-full flex-col items-center pb-16 text-center text-[#2d4034]">
@@ -618,67 +615,115 @@ function HeroSection() {
         </div>
       </div>
 
-      {/* 6. Date Section */}
-      <div className="mt-12 w-full max-w-[16rem]">
-        <p className="font-script text-[2.8rem] text-[#b5935b]">Marzo</p>
-        <div className="my-2 flex items-center justify-center gap-4">
-          <div className="h-[1px] flex-1 bg-[#E3DDD5]" />
-          <div className="flex items-center gap-3">
-            <span className="font-playfair text-xs font-bold text-[#2d4034] uppercase">SÁBADO</span>
-            <span className="font-script text-5xl text-[#b5935b] leading-none">14</span>
-            <span className="font-playfair text-xs font-bold text-[#2d4034]">2026</span>
-          </div>
-          <div className="h-[1px] flex-1 bg-[#E3DDD5]" />
-        </div>
-      </div>
-
-      {/* 7. Countdown Section */}
-      <div className="mt-16 w-full px-6">
-        <p className="font-script text-[2.2rem] text-[#b5935b]">Faltan</p>
-        <div className="mt-4 flex justify-around">
-          {COUNT_LABELS.map(([key, label]) => (
-            <div key={key} className="flex flex-col items-center">
-              <span className="font-playfair text-4xl font-bold text-[#2d4034] leading-none">
-                {String(time[key]).padStart(2, "0")}
-              </span>
-              <span className="font-montserrat mt-2 text-[0.5rem] font-bold tracking-widest text-[#5a6b62]">
-                {label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* 8. Calendar Section */}
-      <div className="mt-16 w-full max-w-[18rem] rounded-2xl bg-[#E3DDD5]/80 p-6 backdrop-blur-sm border border-[#E3DDD5] shadow-sm">
-        <p className="font-script text-[2.2rem] text-[#b5935b]">El Gran Día</p>
-        <p className="font-mis15 text-[1.8rem] text-[#2d4034] -mt-2">Marzo</p>
-        
-        <div className="mt-6 grid grid-cols-7 gap-y-3">
-          {monthGrid.map((d) => (
-            <span key={d} className="font-montserrat text-[0.55rem] font-bold text-[#5a6b62]">
+      <div className="mt-16 w-full max-w-[26rem] px-4 py-5">
+        {/* Title */}
+        <p
+          style={{ fontFamily: '"Great Vibes", cursive' }}
+          className="text-[2.4rem] text-[#2d4034] mb-6 leading-none"
+        >
+          Aprel, 2026
+        </p>
+        {/* Day headers */}
+        <div className="grid grid-cols-7 gap-2 mb-4">
+          {weekDays.map((d) => (
+            <span key={d} className="text-center font-montserrat text-[0.75rem] font-semibold tracking-wide text-[#b0b0b0] uppercase">
               {d}
             </span>
           ))}
-          {Array.from({ length: marchLeadingBlanks }).map((_, i) => (
-            <span key={`e-${i}`} />
-          ))}
-          {Array.from({ length: 31 }, (_, i) => {
-            const day = i + 1;
-            const is14 = day === 14;
+        </div>
+        {/* Week row: March 30 – April 5, 2026 */}
+        <div className="grid grid-cols-7 gap-2">
+          {weekDates.map((day) => {
+            const isWedding = day === 5;
             return (
-              <span
-                key={day}
-                className={`relative flex h-8 items-center justify-center font-playfair text-[0.8rem] ${
-                  is14 ? "calendar-heart z-10 font-bold" : ""
-                }`}
-              >
-                {day}
-              </span>
+              <div key={day} className="relative flex items-center justify-center h-14">
+                {isWedding && (
+                  <svg
+                    className="absolute"
+                    style={{ width: "3.5rem", height: "3.5rem" }}
+                    viewBox="0 0 100 90"
+                    fill="#e8849a"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M50 85 C50 85 5 52 5 28 C5 14 16 5 29 5 C38 5 46 10 50 18 C54 10 62 5 71 5 C84 5 95 14 95 28 C95 52 50 85 50 85Z" />
+                  </svg>
+                )}
+                <span
+                  className={`relative z-10 font-playfair leading-none ${
+                    isWedding
+                      ? "text-white font-bold text-xl"
+                      : "text-[#8a8a8a] text-lg"
+                  }`}
+                >
+                  {day}
+                </span>
+              </div>
             );
           })}
         </div>
+      </div>
+
+      {/* 9. Venue Section */}
+      <div className="mt-16 w-full max-w-[22rem] px-4 text-center">
+        <p
+          style={{ fontFamily: '"Great Vibes", cursive' }}
+          className="text-[2.6rem] text-[#2d4034] leading-tight mb-3"
+        >
+          To'y manzili
+        </p>
+        <p className="font-montserrat text-sm font-bold tracking-widest text-[#2d4034] uppercase leading-relaxed">
+          Yakka Saroy<br />Restorani
+        </p>
+        <p className="font-montserrat mt-3 text-[0.8rem] text-[#7a8c82]">
+          Qarshi shaxri
+        </p>
+        <p className="font-montserrat mt-2 text-[0.72rem] text-[#9aaa9f] leading-relaxed">
+          Mo'ljal: Qarshi-Beshkent yo'li,<br />TATU Qarshi filiali.
+        </p>
+        <div className="mt-8 flex gap-4">
+          <a
+            href="https://yandex.com/maps/?text=Yakka+Saroy+Restorani+Qarshi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 rounded-2xl border border-[#2d4034] py-4 font-montserrat text-[0.78rem] font-semibold text-[#2d4034] tracking-wide"
+          >
+            Yandex xaritasi
+          </a>
+          <a
+            href="https://maps.google.com/?q=Yakka+Saroy+Restorani+Qarshi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 rounded-2xl border border-[#2d4034] py-4 font-montserrat text-[0.78rem] font-semibold text-[#2d4034] tracking-wide"
+          >
+            Google Maps
+          </a>
         </div>
+      </div>
+
+      {/* 10. Building + Car Section */}
+      <div ref={buildingRef} className="mt-10 w-full relative" style={{ overflow: "hidden" }}>
+        {/* Car enters from left, stops at center */}
+        <motion.img
+          src={carImage}
+          alt=""
+          aria-hidden
+          className="absolute pointer-events-none z-10 w-28"
+          initial={{ x: "-110vw", scaleX: -1 }}
+          animate={
+            isBuildingInView
+              ? { x: "calc(50vw - 3.5rem)", scaleX: -1 }
+              : { x: "-110vw", scaleX: -1 }
+          }
+          transition={{ duration: 1.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          style={{ top: 40 }}
+        />
+        <img
+          src={weddingBuilding}
+          alt="Yakka Saroy Restorani"
+          className="relative z-0 w-full block"
+        />
+      </div>
       </div>
     </div>
   );
