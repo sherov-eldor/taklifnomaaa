@@ -703,7 +703,7 @@ function HeroSection() {
 
       {/* 10. Building + Car Section */}
       <div ref={buildingRef} className="mt-10 w-full relative" style={{ overflow: "hidden" }}>
-        {/* Car enters from left, stops at center */}
+        {/* Car enters from left, stops at center — in the road at bottom of building */}
         <motion.img
           src={carImage}
           alt=""
@@ -715,8 +715,8 @@ function HeroSection() {
               ? { x: "calc(50vw - 3.5rem)", scaleX: -1 }
               : { x: "-110vw", scaleX: -1 }
           }
-          transition={{ duration: 1.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-          style={{ top: 40 }}
+          transition={{ duration: 3.5, ease: [0.16, 1, 0.3, 1] }}
+          style={{ bottom: "8%", top: "auto" }}
         />
         <img
           src={weddingBuilding}
