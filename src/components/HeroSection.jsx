@@ -707,15 +707,15 @@ function HeroSection() {
             src={carImage}
             alt=""
             aria-hidden
-            className="absolute pointer-events-none z-10 w-56"
+            className="absolute pointer-events-none z-10 w-100"
             initial={{ x: "-110vw", scaleX: 1 }}
             animate={
               isBuildingInView
-                ? { x: "calc(50vw - 7rem)", scaleX: 1 }
-                : { x: "-110vw", scaleX: 1 }
+                ? { x: "calc(6vw - 7rem)", scaleX: 1 }
+                : { x: "-20vw", scaleX: 1 }
             }
-            transition={{ duration: 9, ease: [0.25, 0.46, 0.45, 0.94] }}
-            style={{ bottom: "8%", top: "auto", left: 0 }}
+            transition={{ duration: 5, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{ bottom: "-20%", top: "auto", left: 0 }}
           />
           <img
             src={weddingBuilding}
