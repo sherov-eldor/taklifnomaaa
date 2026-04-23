@@ -39,15 +39,7 @@
   dominant-baseline: middle;
 }
 
-.reverse-draw {
-  transform-origin: center;
-  transform: scaleX(-1);
-}
 
-.rtl-fix {
-  transform: scaleX(-1);
-  transform-origin: center;
-}
 
 .filled {
   fill-opacity: 1;

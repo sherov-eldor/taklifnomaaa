@@ -69,15 +69,16 @@ function IsmlarOverlay() {
         >
           &
         </text>
-        <g className="reverse-draw">
+        <g transform="translate(800, 0) scale(-1, 1)">
           <text
             ref={name2Ref}
             x="50%"
             y="360"
             fontSize="240"
             textAnchor="middle"
-            className="path name-text rtl-fix"
+            className="path name-text"
             id="name2"
+            transform="translate(800, 0) scale(-1, 1)"
           >
             Diyora
           </text>
