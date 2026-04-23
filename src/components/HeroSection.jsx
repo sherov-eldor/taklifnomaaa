@@ -418,40 +418,52 @@ function HeroSection() {
           </div>
         </div>
 
-      {/* 3. Quote */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        className="font-playfair mx-auto mt-4 max-w-[85%] text-[0.7rem] leading-relaxed tracking-wider text-[#3d5248] uppercase"
-      >
-        "HAY MOMENTOS INOLVIDABLES QUE SE ATESORAN CON EL CORAZÓN PARA SIEMPRE,
-        POR ESA RAZÓN, CON LA ALEGRÍA Y EMOCIÓN, QUIERO COMPARTIR CONTIGO ESTA
-        NOCHE MARAVILLOSA CELEBRANDO JUNTOS MIS XV AÑOS."
-      </motion.p>
+      {/* 3. Invitation Text Section */}
+      <div className="mt-16 space-y-8 px-6 text-center">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="font-script text-[2.5rem] leading-tight text-[#b5935b]"
+        >
+          Qadrli va hurmatli insonimiz!
+        </motion.p>
 
-      {/* 5. Details Section */}
-      <div className="mt-12 space-y-4 px-4">
-        <p className="font-playfair text-[0.7rem] font-bold tracking-[0.1em] text-[#3d5248] uppercase">
-          ACOMPAÑAME EN ESTE DÍA TAN ESPECIAL JUNTO A MIS PADRES:
-        </p>
-        <p className="font-script text-[2.5rem] leading-none text-[#2d4034]">
-          Rafael López & Emilia Peredo
-        </p>
-        <p className="font-playfair mt-6 text-[0.7rem] font-bold tracking-[0.2em] text-[#a68966] uppercase">
-          MIS PADRINOS
-        </p>
-        <p className="font-script text-[2.2rem] leading-none text-[#2d4034]">
-          Freddy Pérez & Mónica Bernat
-        </p>
-        <div className="pt-4">
-          <p className="font-cinzel text-lg font-bold tracking-[0.1em] text-[#2d4034]">
-            A FESTEJAR MIS
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="space-y-4"
+        >
+          <p className="font-script text-[1.8rem] leading-relaxed text-[#2d4034]">
+            Oila deb atalmish muqaddas dargoh ostonasidamiz.
           </p>
-          <p className="font-cinzel text-2xl font-bold tracking-[0.2em] text-[#2d4034]">
-            XV AÑOS
+          <p className="font-script text-[2.2rem] leading-relaxed text-[#2d4034]">
+            Ushbu hayajonli va baxtli lahzalarni <br/> o'zimizning eng yaqinlarimiz davrasida <br/> o'tkazishni niyat qildik.
           </p>
-        </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="pt-4 space-y-6"
+        >
+          <p className="font-script text-[1.9rem] leading-relaxed text-[#2d4034]">
+            Sizni nikoh to'yimiz tantanasiga <br/> lutfan taklif etamiz.
+          </p>
+          <div className="flex items-center justify-center gap-4 py-2">
+            <div className="h-[1px] w-12 bg-[#b5935b]/50" />
+            <span className="font-script text-3xl text-[#b5935b]">❧</span>
+            <div className="h-[1px] w-12 bg-[#b5935b]/50" />
+          </div>
+          <p className="font-script text-[2.4rem] leading-tight text-[#b5935b]">
+            Quvonchli kunimizning <br/> aziz mehmoni bo'lishingizni <br/> kutib qolamiz!
+          </p>
+        </motion.div>
       </div>
 
       {/* 6. Date Section */}
