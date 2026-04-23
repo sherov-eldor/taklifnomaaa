@@ -714,8 +714,8 @@ function HeroSection() {
                 ? { x: "calc(50vw - 7rem)", scaleX: 1 }
                 : { x: "-110vw", scaleX: 1 }
             }
-            transition={{ duration: 7, ease: [0.25, 0.46, 0.45, 0.94] }}
-            style={{ bottom: "8%", top: "auto" }}
+            transition={{ duration: 9, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{ bottom: "8%", top: "auto", left: 0 }}
           />
           <img
             src={weddingBuilding}
