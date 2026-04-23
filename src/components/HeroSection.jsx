@@ -120,7 +120,7 @@ function HeroSection() {
           renderCanvasFrame(index);
         }
       };
-      img.src = `/secure/555/ezgif-frame-${String(index).padStart(3, "0")}.jpg`;
+      img.src = `/secure/666/${String(index).padStart(3, "0")}.jpg`;
     };
 
     const schedule = () => {
