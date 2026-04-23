@@ -44,6 +44,12 @@ function HeroSection() {
   const [hasSwitchedToLoop, setHasSwitchedToLoop] = useState(false);
   const [isSequenceActive, setIsSequenceActive] = useState(false);
   const [isSequenceDone, setIsSequenceDone] = useState(false);
+  const carXRef = useRef(110);
+  const carTargetXRef = useRef(110);
+  const carRafRef = useRef(null);
+  const carNeedsResetRef = useRef(false);
+  const [carXVw, setCarXVw] = useState(110);
+  const frameExitedAboveRef = useRef(false);
 
   const invitationRef = useRef(null);
   const { scrollYProgress: invScrollY } = useScroll({
@@ -76,6 +82,9 @@ function HeroSection() {
     currentFrameRef.current = 1;
     setIsSequenceDone(false);
     setIsSequenceActive(false);
+    carXRef.current = 110;
+    carTargetXRef.current = 110;
+    setCarXVw(110);
   }, []);
 
   useEffect(() => {
@@ -370,6 +379,103 @@ function HeroSection() {
     };
   }, [isSequenceActive, isSequenceDone]);
 
+  // Reset frame sequence when user scrolls back down into frame section after leaving above
+  useEffect(() => {
+    if (!isSequenceDone) return;
+    frameExitedAboveRef.current = false;
+
+    const onScroll = () => {
+      const frameEl = frameSequenceRef.current;
+      if (!frameEl) return;
+      const rect = frameEl.getBoundingClientRect();
+      const vh = window.innerHeight;
+
+      if (rect.top >= vh) {
+        frameExitedAboveRef.current = true;
+      }
+
+      if (frameExitedAboveRef.current && rect.top < vh) {
+        frameExitedAboveRef.current = false;
+        setIsSequenceDone(false);
+        setIsSequenceActive(false);
+        setActiveFrame(1);
+        currentFrameRef.current = 1;
+        carXRef.current = 110;
+        setCarXVw(110);
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isSequenceDone]);
+
+  // Car slides in from right when user scrolls UP through frame section (lerp smoothed)
+  useEffect(() => {
+    if (!isSequenceDone) return;
+    let lastScrollY = window.scrollY;
+
+    const lerp = () => {
+      const diff = carTargetXRef.current - carXRef.current;
+      if (Math.abs(diff) < 0.05) {
+        carXRef.current = carTargetXRef.current;
+        setCarXVw(carTargetXRef.current);
+        carRafRef.current = null;
+        return;
+      }
+      carXRef.current += diff * 0.12;
+      setCarXVw(carXRef.current);
+      carRafRef.current = requestAnimationFrame(lerp);
+    };
+
+    const onScroll = () => {
+      const currentY = window.scrollY;
+      const delta = currentY - lastScrollY;
+      lastScrollY = currentY;
+
+      const frameEl = frameSequenceRef.current;
+      if (!frameEl) return;
+      const rect = frameEl.getBoundingClientRect();
+      const vh = window.innerHeight;
+
+      // Frame section fully above viewport → user went below, mark car for reset
+      if (rect.bottom <= 0) {
+        carNeedsResetRef.current = true;
+        return;
+      }
+
+      // User scrolled back up into frame section → reset car to start position
+      if (carNeedsResetRef.current) {
+        carNeedsResetRef.current = false;
+        if (carRafRef.current) {
+          cancelAnimationFrame(carRafRef.current);
+          carRafRef.current = null;
+        }
+        carXRef.current = 110;
+        carTargetXRef.current = 110;
+        setCarXVw(110);
+      }
+
+      if (delta >= 0 || carTargetXRef.current <= -120) return;
+      if (rect.top >= vh) return;
+
+      const step = Math.abs(delta) * 0.16;
+      carTargetXRef.current = Math.max(-120, carTargetXRef.current - step);
+
+      if (!carRafRef.current) {
+        carRafRef.current = requestAnimationFrame(lerp);
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (carRafRef.current) {
+        cancelAnimationFrame(carRafRef.current);
+        carRafRef.current = null;
+      }
+    };
+  }, [isSequenceDone]);
+
   const monthGrid = useMemo(
     () => ["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"],
     []
@@ -429,13 +535,7 @@ function HeroSection() {
         {/* 2. Scroll-controlled frame sequence */}
         <div
           ref={frameSequenceRef}
-          className="relative w-full overflow-hidden"
-          style={{
-            height: isSequenceDone ? 0 : "100svh",
-            transition: isSequenceDone
-              ? "height 3s cubic-bezier(0.4, 0, 0.2, 1)"
-              : "none",
-          }}
+          className="relative w-full h-[100svh] overflow-hidden"
         >
           <div className="absolute inset-0 flex justify-center">
             <canvas
@@ -443,6 +543,20 @@ function HeroSection() {
               className="h-full w-full object-cover"
             />
           </div>
+          {isSequenceDone && (
+            <img
+              src={carImage}
+              alt=""
+              aria-hidden
+              className="absolute w-96 pointer-events-none z-10"
+              style={{
+                top: "calc(50% + 30px)",
+                transform: `translateX(${carXVw}vw) translateY(-50%) scaleX(-1)`,
+                willChange: "transform",
+                opacity: 0.9,
+              }}
+            />
+          )}
         </div>
 
       {/* 3. Invitation Text Section */}
