@@ -1,7 +1,8 @@
 import { useMemo, useState, useEffect, useLayoutEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform, useVelocity, useMotionValue, useMotionValueEvent } from "framer-motion";
 
 import IsmlarOverlay from "./IsmlarOverlay";
+import carImage from "../assets/car.png";
 
 const targetDate = new Date("2026-03-14T18:00:00");
 
@@ -43,6 +44,23 @@ function HeroSection() {
   const [hasSwitchedToLoop, setHasSwitchedToLoop] = useState(false);
   const [isSequenceActive, setIsSequenceActive] = useState(false);
   const [isSequenceDone, setIsSequenceDone] = useState(false);
+
+  const invitationRef = useRef(null);
+  const { scrollYProgress: invScrollY } = useScroll({
+    target: invitationRef,
+    offset: ["start end", "end start"],
+  });
+  const carX = useTransform(invScrollY, [0, 1], ["120%", "-120%"]);
+  const carScaleX = useMotionValue(-1);
+  const invVelocity = useVelocity(invScrollY);
+
+  useMotionValueEvent(invVelocity, "change", (v) => {
+    if (v === 0) return;
+    const xNum = parseFloat(carX.get());
+    if (Math.abs(xNum) > 105) {
+      carScaleX.set(v > 0 ? -1 : 1);
+    }
+  });
 
   useLayoutEffect(() => {
     if ("scrollRestoration" in window.history) {
@@ -409,7 +427,16 @@ function HeroSection() {
 
       <div className="relative w-full flex flex-col items-center">
         {/* 2. Scroll-controlled frame sequence */}
-        <div ref={frameSequenceRef} className="relative w-full h-[100svh]">
+        <div
+          ref={frameSequenceRef}
+          className="relative w-full overflow-hidden"
+          style={{
+            height: isSequenceDone ? 0 : "100svh",
+            transition: isSequenceDone
+              ? "height 3s cubic-bezier(0.4, 0, 0.2, 1)"
+              : "none",
+          }}
+        >
           <div className="absolute inset-0 flex justify-center">
             <canvas
               ref={canvasRef}
@@ -419,51 +446,62 @@ function HeroSection() {
         </div>
 
       {/* 3. Invitation Text Section */}
-      <div className="mt-16 space-y-8 px-6 text-center">
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="font-script text-[2.5rem] leading-tight text-[#b5935b]"
-        >
-          Qadrli va hurmatli insonimiz!
-        </motion.p>
+      <div ref={invitationRef} className="relative mt-16 w-full overflow-hidden">
+        {/* Car — behind text */}
+        <motion.img
+          src={carImage}
+          alt=""
+          aria-hidden
+          className="absolute top-1/2 -translate-y-1/2 w-64 pointer-events-none z-0"
+          style={{ x: carX, scaleX: carScaleX, opacity: 0.4 }}
+        />
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="space-y-4"
-        >
-          <p className="font-script text-[1.8rem] leading-relaxed text-[#2d4034]">
-            Oila deb atalmish muqaddas dargoh ostonasidamiz.
-          </p>
-          <p className="font-script text-[2.2rem] leading-relaxed text-[#2d4034]">
-            Ushbu hayajonli va baxtli lahzalarni <br/> o'zimizning eng yaqinlarimiz davrasida <br/> o'tkazishni niyat qildik.
-          </p>
-        </motion.div>
+        <div className="relative z-10 space-y-8 px-6 text-center">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="font-script text-[2.5rem] leading-tight text-[#b5935b]"
+          >
+            Qadrli va hurmatli insonimiz!
+          </motion.p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="pt-4 space-y-6"
-        >
-          <p className="font-script text-[1.9rem] leading-relaxed text-[#2d4034]">
-            Sizni nikoh to'yimiz tantanasiga <br/> lutfan taklif etamiz.
-          </p>
-          <div className="flex items-center justify-center gap-4 py-2">
-            <div className="h-[1px] w-12 bg-[#b5935b]/50" />
-            <span className="font-script text-3xl text-[#b5935b]">❧</span>
-            <div className="h-[1px] w-12 bg-[#b5935b]/50" />
-          </div>
-          <p className="font-script text-[2.4rem] leading-tight text-[#b5935b]">
-            Quvonchli kunimizning <br/> aziz mehmoni bo'lishingizni <br/> kutib qolamiz!
-          </p>
-        </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="space-y-4"
+          >
+            <p className="font-script text-[1.8rem] leading-relaxed text-[#2d4034]">
+              Oila deb atalmish muqaddas dargoh ostonasidamiz.
+            </p>
+            <p className="font-script text-[2.2rem] leading-relaxed text-[#2d4034]">
+              Ushbu hayajonli va baxtli lahzalarni <br/> o'zimizning eng yaqinlarimiz davrasida <br/> o'tkazishni niyat qildik.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="pt-4 space-y-6"
+          >
+            <p className="font-script text-[1.9rem] leading-relaxed text-[#2d4034]">
+              Sizni nikoh to'yimiz tantanasiga <br/> lutfan taklif etamiz.
+            </p>
+            <div className="flex items-center justify-center gap-4 py-2">
+              <div className="h-[1px] w-12 bg-[#b5935b]/50" />
+              <span className="font-script text-3xl text-[#b5935b]">❧</span>
+              <div className="h-[1px] w-12 bg-[#b5935b]/50" />
+            </div>
+            <p className="font-script text-[2.4rem] leading-tight text-[#b5935b]">
+              Quvonchli kunimizning <br/> aziz mehmoni bo'lishingizni <br/> kutib qolamiz!
+            </p>
+          </motion.div>
+        </div>
       </div>
 
       {/* 6. Date Section */}
