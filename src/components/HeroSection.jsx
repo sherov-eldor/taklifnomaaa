@@ -672,17 +672,17 @@ function HeroSection() {
             To'y manzili
           </p>
           <p className="font-montserrat text-sm font-bold tracking-widest text-[#2d4034] uppercase leading-relaxed">
-            Yakka Saroy<br />Restorani
+            O'zbegim
           </p>
           <p className="font-montserrat mt-3 text-[0.8rem] text-[#7a8c82]">
-            Qarshi shaxri
+            Karmana tumani
           </p>
           <p className="font-montserrat mt-2 text-[0.72rem] text-[#9aaa9f] leading-relaxed">
-            Mo'ljal: Qarshi-Beshkent yo'li,<br />TATU Qarshi filiali.
+            Mo'ljal: Regal hoteli ro'parasida
           </p>
           <div className="mt-8 flex gap-4">
             <a
-              href="https://yandex.com/maps/?text=Yakka+Saroy+Restorani+Qarshi"
+              href="https://yandex.uz/maps/-/CPGMZO5r"
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 rounded-2xl border border-[#2d4034] py-4 font-montserrat text-[0.78rem] font-semibold text-[#2d4034] tracking-wide"
@@ -690,7 +690,7 @@ function HeroSection() {
               Yandex xaritasi
             </a>
             <a
-              href="https://maps.google.com/?q=Yakka+Saroy+Restorani+Qarshi"
+              href="https://maps.google.com/?q=O'zbegim+Karmana"
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 rounded-2xl border border-[#2d4034] py-4 font-montserrat text-[0.78rem] font-semibold text-[#2d4034] tracking-wide"
@@ -712,10 +712,10 @@ function HeroSection() {
             animate={
               isBuildingInView
                 ? { x: "calc(6vw - 7rem)", scaleX: 1 }
-                : { x: "-20vw", scaleX: 1 }
+                : { x: "-110vw", scaleX: 1 }
             }
             transition={{ duration: 5, ease: [0.25, 0.46, 0.45, 0.94] }}
-            style={{ bottom: "-20%", top: "auto", left: 0 }}
+            style={{ bottom: "-50%", top: "auto", left: 0 }}
           />
           <img
             src={weddingBuilding}
