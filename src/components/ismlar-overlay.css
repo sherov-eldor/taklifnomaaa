@@ -5,10 +5,9 @@
 }
 
 .calligraphy-stage {
-  width: 390px;
-  height: 244px;
+  width: 100%;
   max-width: 390px;
-  max-height: 244px;
+  height: auto;
   flex-shrink: 0;
   overflow: visible;
 }
@@ -27,6 +26,8 @@
     stroke-width 1.8s ease,
     filter 2s ease;
   filter: blur(0.6px);
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
 }
 
 .name-text {
