@@ -22,7 +22,7 @@ const COUNT_LABELS = [
   ["minutes", "MINUTOS"],
   ["seconds", "SEGUNDOS"],
 ];
-const FRAME_COUNT = 288;
+const FRAME_COUNT = 198;
 
 function HeroSection() {
   const [time, setTime] = useState(getTimeLeft());
@@ -120,7 +120,7 @@ function HeroSection() {
           renderCanvasFrame(index);
         }
       };
-      img.src = `/secure/frames/${String(index).padStart(3, "0")}.jpg`;
+      img.src = `/secure/555/ezgif-frame-${String(index).padStart(3, "0")}.jpg`;
     };
 
     const schedule = () => {
