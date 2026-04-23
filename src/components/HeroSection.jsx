@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useLayoutEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import heroBanner from "../images/hero.png";
+
 import IsmlarOverlay from "./IsmlarOverlay";
 
 const targetDate = new Date("2026-03-14T18:00:00");
@@ -29,6 +29,7 @@ function HeroSection() {
   const [activeFrame, setActiveFrame] = useState(1);
   const headerMediaRef = useRef(null);
   const frameSequenceRef = useRef(null);
+  const canvasRef = useRef(null);
   const introVideoRef = useRef(null);
   const loopVideoRef = useRef(null);
   const touchStartYRef = useRef(null);
@@ -37,6 +38,7 @@ function HeroSection() {
   const queuedRafRef = useRef(null);
   const lastFrameUpdateAtRef = useRef(0);
   const preloadedFramesRef = useRef(new Set());
+  const imagesMapRef = useRef(new Map());
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [hasSwitchedToLoop, setHasSwitchedToLoop] = useState(false);
   const [isSequenceActive, setIsSequenceActive] = useState(false);
@@ -60,8 +62,47 @@ function HeroSection() {
 
   useEffect(() => {
     currentFrameRef.current = activeFrame;
+    renderCanvasFrame(activeFrame);
   }, [activeFrame]);
 
+  const renderCanvasFrame = (frameIndex) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const img = imagesMapRef.current.get(frameIndex);
+    if (!img) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const imageWidth = img.width;
+    const imageHeight = img.height;
+
+    const ratio = Math.max(canvasWidth / imageWidth, canvasHeight / imageHeight);
+    const newWidth = imageWidth * ratio;
+    const newHeight = imageHeight * ratio;
+    const x = (canvasWidth - newWidth) / 2;
+    const y = (canvasHeight - newHeight) / 2;
+
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    ctx.drawImage(img, x, y, newWidth, newHeight);
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      renderCanvasFrame(currentFrameRef.current);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   useEffect(() => {
     let cancelled = false;
     let idleId = null;
@@ -73,6 +114,12 @@ function HeroSection() {
       preloadedFramesRef.current.add(index);
       const img = new Image();
       img.decoding = "async";
+      img.onload = () => {
+        imagesMapRef.current.set(index, img);
+        if (index === currentFrameRef.current) {
+          renderCanvasFrame(index);
+        }
+      };
       img.src = `/secure/frames/${String(index).padStart(3, "0")}.jpg`;
     };
 
@@ -325,21 +372,14 @@ function HeroSection() {
           className="relative h-full w-full overflow-hidden"
         >
           {prefersReducedMotion ? (
-            <motion.img
-              initial={{ opacity: 0, scale: 1.02 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.2 }}
-              src={heroBanner}
-              alt=""
-              className="pointer-events-none h-full w-full object-cover"
-            />
+            <div className="h-full w-full bg-[#E3DDD5]/20 animate-pulse" />
           ) : (
             <>
               <video
                 ref={introVideoRef}
                 className="pointer-events-none absolute inset-0 z-0 block h-full w-full object-cover bg-[#E3DDD5]/20"
                 src="/1.webm"
-                poster={heroBanner}
+
                 muted
                 onEnded={handleIntroEnded}
                 playsInline
@@ -371,11 +411,9 @@ function HeroSection() {
         {/* 2. Scroll-controlled frame sequence */}
         <div ref={frameSequenceRef} className="relative w-full h-[100svh]">
           <div className="absolute inset-0 flex justify-center">
-            <img
-              src={`/secure/frames/${String(activeFrame).padStart(3, "0")}.jpg`}
-              alt="Frame sequence"
+            <canvas
+              ref={canvasRef}
               className="h-full w-full object-cover"
-              loading="eager"
             />
           </div>
         </div>
