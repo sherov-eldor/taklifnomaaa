@@ -423,7 +423,7 @@ function HeroSection() {
         carRafRef.current = null;
         return;
       }
-      carXRef.current += diff * 0.12;
+      carXRef.current += diff * 0.01;
       setCarXVw(carXRef.current);
       carRafRef.current = requestAnimationFrame(lerp);
     };
@@ -459,7 +459,7 @@ function HeroSection() {
       if (delta >= 0 || carTargetXRef.current <= -120) return;
       if (rect.top >= vh) return;
 
-      const step = Math.abs(delta) * 0.16;
+      const step = Math.abs(delta) * 0.1;
       carTargetXRef.current = Math.max(-120, carTargetXRef.current - step);
 
       if (!carRafRef.current) {
@@ -482,7 +482,7 @@ function HeroSection() {
   const weekDates = [30, 31, 1, 2, 3, 4, 5];
 
   const buildingRef = useRef(null);
-  const isBuildingInView = useInView(buildingRef, { once: true, amount: 1 });
+  const isBuildingInView = useInView(buildingRef, { once: false, amount: 1 });
 
   return (
     <div className="relative z-10 flex min-h-full flex-col items-center pb-16 text-center text-[#2d4034]">
@@ -712,10 +712,10 @@ function HeroSection() {
             animate={
               isBuildingInView
                 ? { x: "calc(6vw - 7rem)", scaleX: 1 }
-                : { x: "-110vw", scaleX: 1 }
+                : { x: "-25vw", scaleX: 1 }
             }
             transition={{ duration: 5, ease: [0.25, 0.46, 0.45, 0.94] }}
-            style={{ bottom: "-50%", top: "auto", left: 0 }}
+            style={{ bottom: "-25%", top: "auto", left: 0 }}
           />
           <img
             src={weddingBuilding}
