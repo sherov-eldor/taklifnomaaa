@@ -708,14 +708,14 @@ function HeroSection() {
           src={carImage}
           alt=""
           aria-hidden
-          className="absolute pointer-events-none z-10 w-28"
+          className="absolute pointer-events-none z-10 w-56"
           initial={{ x: "-110vw", scaleX: -1 }}
           animate={
             isBuildingInView
-              ? { x: "calc(50vw - 3.5rem)", scaleX: -1 }
+              ? { x: "calc(50vw - 7rem)", scaleX: -1 }
               : { x: "-110vw", scaleX: -1 }
           }
-          transition={{ duration: 3.5, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.8, ease: [0.25, 0.46, 0.45, 0.94] }}
           style={{ bottom: "8%", top: "auto" }}
         />
         <img
