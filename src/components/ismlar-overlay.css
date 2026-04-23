@@ -31,11 +31,9 @@
 }
 
 .name-text {
-  font-size: 240px;
 }
 
 .ampersand {
-  font-size: 90px;
   stroke: #b08d57;
   fill: #b08d57;
   dominant-baseline: middle;

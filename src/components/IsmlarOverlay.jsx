@@ -51,6 +51,7 @@ function IsmlarOverlay() {
           ref={name1Ref}
           x="50%"
           y="120"
+          fontSize="240"
           textAnchor="middle"
           className="path name-text"
           id="name1"
@@ -61,6 +62,7 @@ function IsmlarOverlay() {
           ref={andRef}
           x="55%"
           y="225"
+          fontSize="90"
           textAnchor="middle"
           className="path ampersand"
           id="and-sign"
@@ -72,6 +74,7 @@ function IsmlarOverlay() {
             ref={name2Ref}
             x="50%"
             y="360"
+            fontSize="240"
             textAnchor="middle"
             className="path name-text rtl-fix"
             id="name2"
