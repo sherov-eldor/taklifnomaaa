@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect, useLayoutEffect, useRef } from "react";
-import { motion, useScroll, useTransform, useVelocity, useMotionValue, useMotionValueEvent, useInView } from "framer-motion";
+import { motion, useScroll, useTransform, useVelocity, useMotionValue, useMotionValueEvent, useInView, useAnimationControls } from "framer-motion";
 
 import IsmlarOverlay from "./IsmlarOverlay";
 import carImage from "../assets/car.png";
 import weddingBuilding from "../assets/wedding_building.png";
+import ringsImage from "../assets/rings.png";
 
 const targetDate = new Date("2026-04-05T18:00:00");
 
@@ -18,12 +19,6 @@ const getTimeLeft = () => {
   };
 };
 
-const COUNT_LABELS = [
-  ["days", "DÍAS"],
-  ["hours", "HORAS"],
-  ["minutes", "MINUTOS"],
-  ["seconds", "SEGUNDOS"],
-];
 const FRAME_COUNT = 198;
 
 function HeroSection() {
@@ -45,12 +40,24 @@ function HeroSection() {
   const [hasSwitchedToLoop, setHasSwitchedToLoop] = useState(false);
   const [isSequenceActive, setIsSequenceActive] = useState(false);
   const [isSequenceDone, setIsSequenceDone] = useState(false);
-  const carXRef = useRef(110);
-  const carTargetXRef = useRef(110);
-  const carRafRef = useRef(null);
-  const carNeedsResetRef = useRef(false);
-  const [carXVw, setCarXVw] = useState(110);
   const frameExitedAboveRef = useRef(false);
+
+  const { scrollYProgress: frameScrollY } = useScroll({
+    target: frameSequenceRef,
+    offset: ["start end", "end start"],
+  });
+
+  const frameCarX = useTransform(frameScrollY, [0, 1], ["-120vw", "120vw"]);
+  const frameVelocity = useVelocity(frameScrollY);
+  const [showFrameCar, setShowFrameCar] = useState(false);
+
+  useMotionValueEvent(frameVelocity, "change", (v) => {
+    if (v > 0) {
+      setShowFrameCar(false);
+    } else if (v < 0) {
+      setShowFrameCar(true);
+    }
+  });
 
   const invitationRef = useRef(null);
   const { scrollYProgress: invScrollY } = useScroll({
@@ -83,9 +90,6 @@ function HeroSection() {
     currentFrameRef.current = 1;
     setIsSequenceDone(false);
     setIsSequenceActive(false);
-    carXRef.current = 110;
-    carTargetXRef.current = 110;
-    setCarXVw(110);
   }, []);
 
   useEffect(() => {
@@ -262,9 +266,15 @@ function HeroSection() {
 
       const rect = host.getBoundingClientRect();
       const viewportHeight = window.visualViewport?.height || window.innerHeight || 1;
-      const reachedTop = rect.top <= 8;
+      const reachedTop = rect.top <= 10; // Kichik jitterlarga tolerantroq
       const stillOnScreen = rect.bottom > viewportHeight * 0.35;
-      setIsSequenceActive(reachedTop && stillOnScreen);
+
+      setIsSequenceActive((prev) => {
+        // Agar allaqachon active bo'lsa, o'z-o'zidan o'chib qolmasin.
+        // O'chirish faqat didHitEnd yoki didHitStart orqali amalga oshadi.
+        if (prev) return true;
+        return reachedTop && stillOnScreen;
+      });
       rafId = null;
     };
 
@@ -286,6 +296,15 @@ function HeroSection() {
 
   useEffect(() => {
     if (!isSequenceActive || isSequenceDone) return;
+
+    // 1. Qatiy Lock: Frame sectionni aniq ekranning tepa qismiga tekislash (snap).
+    const host = frameSequenceRef.current;
+    if (host) {
+      const rect = host.getBoundingClientRect();
+      if (Math.abs(rect.top) > 1) {
+        window.scrollTo({ top: window.scrollY + rect.top, behavior: "auto" });
+      }
+    }
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -327,14 +346,14 @@ function HeroSection() {
 
       if (didHitStart) {
         releaseLock();
-        window.scrollBy({ top: -8, behavior: "auto" });
+        window.scrollBy({ top: -20, behavior: "auto" });
         return;
       }
 
       if (didHitEnd) {
         setIsSequenceDone(true);
         releaseLock();
-        window.scrollBy({ top: 8, behavior: "auto" });
+        window.scrollBy({ top: 20, behavior: "auto" });
       }
     };
 
@@ -401,8 +420,6 @@ function HeroSection() {
         setIsSequenceActive(false);
         setActiveFrame(1);
         currentFrameRef.current = 1;
-        carXRef.current = 110;
-        setCarXVw(110);
       }
     };
 
@@ -410,79 +427,127 @@ function HeroSection() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [isSequenceDone]);
 
-  // Car slides in from right when user scrolls UP through frame section (lerp smoothed)
-  useEffect(() => {
-    if (!isSequenceDone) return;
-    let lastScrollY = window.scrollY;
 
-    const lerp = () => {
-      const diff = carTargetXRef.current - carXRef.current;
-      if (Math.abs(diff) < 0.05) {
-        carXRef.current = carTargetXRef.current;
-        setCarXVw(carTargetXRef.current);
-        carRafRef.current = null;
-        return;
-      }
-      carXRef.current += diff * 0.01;
-      setCarXVw(carXRef.current);
-      carRafRef.current = requestAnimationFrame(lerp);
-    };
-
-    const onScroll = () => {
-      const currentY = window.scrollY;
-      const delta = currentY - lastScrollY;
-      lastScrollY = currentY;
-
-      const frameEl = frameSequenceRef.current;
-      if (!frameEl) return;
-      const rect = frameEl.getBoundingClientRect();
-      const vh = window.innerHeight;
-
-      // Frame section fully above viewport → user went below, mark car for reset
-      if (rect.bottom <= 0) {
-        carNeedsResetRef.current = true;
-        return;
-      }
-
-      // User scrolled back up into frame section → reset car to start position
-      if (carNeedsResetRef.current) {
-        carNeedsResetRef.current = false;
-        if (carRafRef.current) {
-          cancelAnimationFrame(carRafRef.current);
-          carRafRef.current = null;
-        }
-        carXRef.current = 110;
-        carTargetXRef.current = 110;
-        setCarXVw(110);
-      }
-
-      if (delta >= 0 || carTargetXRef.current <= -120) return;
-      if (rect.top >= vh) return;
-
-      const step = Math.abs(delta) * 0.1;
-      carTargetXRef.current = Math.max(-120, carTargetXRef.current - step);
-
-      if (!carRafRef.current) {
-        carRafRef.current = requestAnimationFrame(lerp);
-      }
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (carRafRef.current) {
-        cancelAnimationFrame(carRafRef.current);
-        carRafRef.current = null;
-      }
-    };
-  }, [isSequenceDone]);
 
   const weekDays = ["DU", "SE", "CHOR", "PAY", "JU", "SHA", "YA"];
   // April 5, 2026 is Sunday (YA = Yakshanba), week: March 30 – April 5
   const weekDates = [30, 31, 1, 2, 3, 4, 5];
 
   const buildingRef = useRef(null);
-  const isBuildingInView = useInView(buildingRef, { once: false, amount: 1 });
+  const footerRef = useRef(null);
+  const buildingCarControls = useAnimationControls();
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    const phase = { current: "idle" }; // 'idle' | 'entering' | 'exiting'
+    const exitX = { current: 0 };
+    const exitTarget = { current: 0 };
+    let rafId = null;
+
+    const stopLerp = () => {
+      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+    };
+
+    const runLerp = () => {
+      const w = buildingRef.current?.getBoundingClientRect().width ?? window.innerWidth;
+      const diff = exitTarget.current - exitX.current;
+      exitX.current += Math.abs(diff) > 0.5 ? diff * 0.1 : diff;
+      buildingCarControls.set({ x: exitX.current });
+      if (exitX.current >= w + 100) {
+        phase.current = "idle";
+        rafId = null;
+        const start = -(w + 100);
+        buildingCarControls.set({ x: start });
+        exitX.current = start;
+        exitTarget.current = start;
+        return;
+      }
+      rafId = requestAnimationFrame(runLerp);
+    };
+
+    const onScroll = () => {
+      const building = buildingRef.current;
+      const footer = footerRef.current;
+      if (!building || !footer) return;
+
+      const currentY = window.scrollY;
+      const delta = currentY - lastScrollY;
+      lastScrollY = currentY;
+
+      const br = building.getBoundingClientRect();
+      const fr = footer.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const w = br.width;
+
+      const buildingGone = br.bottom <= 0 || br.top >= vh;
+      const footerVisible = fr.top < vh * 0.9;
+
+      // Building viewport'dan chiqdi → reset
+      if (buildingGone && phase.current !== "idle") {
+        phase.current = "idle";
+        stopLerp();
+        buildingCarControls.stop();
+        const start = -(w + 100);
+        buildingCarControls.set({ x: start });
+        exitX.current = start;
+        exitTarget.current = start;
+        return;
+      }
+
+      // Footer ko'rindi + building viewport'da + idle → kirib kelsin
+      if (footerVisible && !buildingGone && phase.current === "idle") {
+        const carEnd = w / 2 - 112 - 65;
+        const carStart = -(w + 100);
+        phase.current = "entering";
+        exitX.current = carEnd;
+        exitTarget.current = carEnd;
+        buildingCarControls.start({
+          x: carEnd,
+          scaleX: 1,
+          transition: { duration: Math.abs(carEnd - carStart) / 150, ease: [0.25, 0.46, 0.45, 0.94] },
+        });
+        return;
+      }
+
+      // Tepaga scroll → car o'ngga chiqib ketsin
+      if (delta < 0 && !buildingGone && phase.current !== "idle") {
+        if (phase.current === "entering") {
+          buildingCarControls.stop();
+          buildingCarControls.set({ x: exitX.current });
+          phase.current = "exiting";
+        }
+        const step = Math.abs(delta) * 0.3 * (390 / w);
+        exitTarget.current += step;
+        if (rafId === null) rafId = requestAnimationFrame(runLerp);
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      stopLerp();
+    };
+  }, [buildingCarControls]);
+
+  const [containerWidth, setContainerWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const measure = () => {
+      if (buildingRef.current) {
+        setContainerWidth(buildingRef.current.getBoundingClientRect().width);
+      }
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  // Pixel-based building car: consistent speed (px/s) on all screen sizes
+  const CAR_WIDTH_PX = 112; // w-28 = 7rem
+  const CAR_SPEED_PX_PER_SEC = 150;
+  const buildingCarStart = -(containerWidth + 100);
+  const buildingCarEnd = containerWidth / 2 - CAR_WIDTH_PX - 65;
+  const buildingCarDuration = Math.abs(buildingCarEnd - buildingCarStart) / CAR_SPEED_PX_PER_SEC;
 
   return (
     <div className="relative z-10 flex min-h-full flex-col items-center pb-16 text-center text-[#2d4034]">
@@ -525,6 +590,47 @@ function HeroSection() {
             </>
           )}
           <IsmlarOverlay />
+
+          {hasSwitchedToLoop && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.5 }}
+              className="absolute bottom-[calc(8vh+30px)] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center"
+            >
+              {/* Vertikal chiziq */}
+              <motion.div
+                animate={{ height: [40, 55, 40], opacity: [0.3, 0.8, 0.3] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                className="w-[1.5px] bg-[#722020] rounded-full mb-1"
+              />
+
+              {/* 3 ta strelka (Chevrons) */}
+              <div className="flex flex-col -space-y-3 text-[#722020]">
+                {[0, 1, 2].map((i) => (
+                  <motion.svg
+                    key={i}
+                    className="w-7 h-7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    viewBox="0 0 24 24"
+                    animate={{ opacity: [0.1, 0.9, 0.1], y: [0, 4, 0] }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      delay: i * 0.2,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </motion.svg>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
 
@@ -540,20 +646,24 @@ function HeroSection() {
               className="h-full w-full object-cover"
             />
           </div>
-          {isSequenceDone && (
-            <img
+          {/* Hozircha yashirib qo'yildi, keyinchalik kerak bo'lsa ochiladi:
+          isSequenceDone && (
+            <motion.img
+              initial={{ opacity: 0 }}
+              animate={{ opacity: showFrameCar ? 0.9 : 0 }}
+              transition={{ duration: 0.3 }}
               src={carImage}
               alt=""
               aria-hidden
               className="absolute w-96 pointer-events-none z-10"
               style={{
                 top: "calc(50% + 30px)",
-                transform: `translateX(${carXVw}vw) translateY(-50%) scaleX(-1)`,
-                willChange: "transform",
-                opacity: 0.9,
+                y: "-50%",
+                x: frameCarX,
+                scaleX: -1,
               }}
             />
-          )}
+          )*/}
         </div>
 
         {/* 3. Invitation Text Section */}
@@ -701,26 +811,65 @@ function HeroSection() {
         </div>
 
         {/* 10. Building + Car Section */}
-        <div ref={buildingRef} className="mt-10 w-full relative" style={{ overflow: "hidden" }}>
+        <div ref={buildingRef} className="mt-10 w-full relative">
           {/* Car enters from left, stops at center — in the road at bottom of building */}
           <motion.img
             src={carImage}
             alt=""
             aria-hidden
-            className="absolute pointer-events-none z-10 w-100"
-            initial={{ x: "-110vw", scaleX: 1 }}
-            animate={
-              isBuildingInView
-                ? { x: "calc(6vw - 7rem)", scaleX: 1 }
-                : { x: "-25vw", scaleX: 1 }
-            }
-            transition={{ duration: 5, ease: [0.25, 0.46, 0.45, 0.94] }}
-            style={{ bottom: "-25%", top: "auto", left: 0 }}
+            className="absolute pointer-events-none z-10 w-84"
+            initial={{ x: buildingCarStart, scaleX: 1 }}
+            animate={buildingCarControls}
+            style={{ bottom: "-12%", top: "auto", left: 0 }}
           />
           <img
             src={weddingBuilding}
             alt="Yakka Saroy Restorani"
             className="relative z-0 w-full block"
+          />
+        </div>
+
+        {/* 11. Countdown Section */}
+        <div ref={footerRef} className="mt-16 w-full px-6 text-center">
+          <p
+            style={{ fontFamily: '"Great Vibes", cursive' }}
+            className="text-[2.6rem] text-[#2d4034] leading-tight"
+          >
+            Visol onlariga
+          </p>
+
+          <div className="mt-8 flex items-start justify-center gap-1">
+            {[
+              { key: "days", label: "Kun" },
+              { key: "hours", label: "Soat" },
+              { key: "minutes", label: "Daqiqa" },
+              { key: "seconds", label: "Soniya" },
+            ].map(({ key, label }, idx) => (
+              <div key={key} className="flex items-start">
+                <div className="flex flex-col items-center w-14">
+                  <span className="font-playfair text-[3rem] font-bold leading-none text-[#2d4034]">
+                    {String(time[key]).padStart(2, "0")}
+                  </span>
+                  <span
+                    style={{ fontFamily: '"Great Vibes", cursive' }}
+                    className="mt-1 text-[1.1rem] text-[#c4687a]"
+                  >
+                    {label}
+                  </span>
+                </div>
+                {idx < 3 && (
+                  <span className="font-playfair text-[2.4rem] font-bold text-[#c4687a] leading-none mx-1 mt-1">
+                    :
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <img
+            src={ringsImage}
+            alt="Uzuklar"
+            className="mx-auto mt-10 w-48"
           />
         </div>
       </div>
